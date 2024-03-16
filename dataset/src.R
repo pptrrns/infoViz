@@ -256,19 +256,71 @@ write.csv(wiidcountry, "wiidcountry.csv", row.names = FALSE)
 
 # World Income Inequality Database -- Companion Global
 # https://www.wider.unu.edu/database/world-income-inequality-database-wiid
-# wiidglobal <- read_dta("WIID/wiidglobal.dta") %>% 
-#  filter(c3 == "") %>% 
-#  select(-c(c3, interpolated, id, region_wb, incomegroup)) %>% 
-#  clean_names() %>% 
-#  filter(!country == "Missing")
+wiidglobal <- read_dta("WIID/wiidglobal.dta")
 
-# wiidglobal <- remove_val_labels(wiidglobal)
-# wiidglobal <- remove_attributes(wiidglobal, "format.stata")
+wiidglobal <- remove_val_labels(wiidglobal)
+wiidglobal <- remove_attributes(wiidglobal, "format.stata")
 
-# for (i in 1:ncol(wiidglobal)) {
-#  attr(wiidglobal[[i]], "label") <- NULL
-# }
+for (i in 1:ncol(wiidglobal)) {
+  attr(wiidglobal[[i]], "label") <- NULL
+}
 
-# wiidglobal <- wiidglobal %>% 
-#  select(-c(starts_with("ge"), starts_with("a"),
-#            starts_with("dy"), starts_with("y"), palma, s80s20))
+wiidglobal <- wiidglobal %>% mutate(c3 = na_if(c3, ""))
+
+wiidglobal <- wiidglobal %>% 
+  mutate(id = case_when(is.na(c3) ~ "Area",
+    TRUE ~ paste(c3, year, sep = ""))) %>% 
+  rename(identifier = id,
+         iso3 = c3,
+         fecha = year,
+         region = area) %>% 
+  select(-c(interpolated, 
+            starts_with("ge"), starts_with("a"),
+            starts_with("dy"), starts_with("y"),
+            palma, s80s20, sd)) %>%
+  rename(year = fecha) %>% 
+  mutate(
+  region_wb = case_when(
+    region_wb == 1 ~ "North America",
+    region_wb == 2 ~ "Latin America and the Caribbean",
+    region_wb == 3 ~ "Europe and Central Asia",
+    region_wb == 4 ~ "Middle East and North Africa",
+    region_wb == 5 ~ "Sub-Saharan Africa",
+    region_wb == 6 ~ "South Asia",
+    region_wb == 7 ~ "East Asia and the Pacific",
+    region_wb == 30 ~ "Non EU Soviet",
+    TRUE ~ NA),
+  incomegroup = case_when(
+    incomegroup == 0 ~ "All income groups (world)",
+    incomegroup == 1 ~ "High income",
+    incomegroup == 2 ~ "Upper middle income",
+    incomegroup == 3 ~ "Lower middle income",
+    incomegroup == 4 ~ "Low income",
+    TRUE ~ NA),
+  region = case_when(
+    region == 0 ~ "World",
+    region == 1 ~ "Region",
+    region == 2 ~ "Income group",
+    region == 3 ~ "Country",
+    TRUE ~ NA),
+  subarea = case_when(
+    subarea == 0 ~ "World (overall)",
+    subarea == 1 ~ "World (between-countries)",
+    subarea == 2 ~ "World (within-countries)",
+    subarea == 3 ~ "World (population weighted sum)",
+    subarea == 4 ~ "World (Shapley between-country share)",
+    subarea == 11 ~ "North America",
+    subarea == 12 ~ "Latin America and the Caribbean",
+    subarea == 13 ~ "Europe and Central Asia",
+    subarea == 14 ~ "Middle East and North Africa",
+    subarea == 15 ~ "Sub-Saharan Africa",
+    subarea == 16 ~ "South Asia",
+    subarea == 17 ~ "East Asia and the Pacific",
+    subarea == 21 ~ "High income",
+    subarea == 22 ~ "Upper middle income",
+    subarea == 23 ~ "Lower middle income",
+    subarea == 24 ~ "Low income",
+    subarea == 300 ~ "Country",
+    TRUE ~ NA))
+
+write.csv(wiidglobal, "wiidglobal.csv", row.names = FALSE)

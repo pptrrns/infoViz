@@ -1,0 +1,335 @@
+---
+output: 
+  stevetemplates::article2:
+    citation_package: natbib
+    # dev: cairo_pdf
+    keep_tex: FALSE
+# biblio-style: chicago
+csl: chicago-author-date-16th-edition.csl
+title: "Análisis exploratorio de datos (EDA)"
+thanks: "Los archivos del dataset se encuentran disponibles en (https://github.com/pptrrns/infoViz/tree/main/dataset)."
+author:
+- name: José Ángel Torrens Hernández
+  affiliation: 175021 | \emph{Ciencia Política}
+# abstract: "Indicar el dataset seleccionado. Por qué eligió ese dataset y qué espera obtener de él. Se entrega la descripción del dataset (atributos, longitud, etcétera)."
+keywords: "desigualdad, desarrollo humano, pobreza"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+geometry: margin=1in
+mainfont: cochineal
+#sansfont: Linux Biolinum O
+fontsize: 11pt
+# doublespacing: TRUE
+endnote: no
+# pandocparas: TRUE
+sansitup: FALSE
+bibliography: master.bib
+header-includes:
+  - \usepackage{longtable}
+  - \LTcapwidth=.95\textwidth
+  - \linespread{1}
+  - \usepackage{hyperref}
+  - \usepackage{setspace}  # Se agrega el paquete setspace
+  - \setstretch{1.1}  # Cambiar el interlineado a 1.25
+  - \usepackage{tabularx}
+  - \usepackage{graphicx}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# Introducción
+
+Se presenta un análisis exploratorio de datos (EDA) no exhaustivo para algunas variables de las bases de datos *Human Development Index* (`hdi.csv`) del Programa de las Naciones Unidas para el Desarrollo @hri_cite, y el conjunto de datos *World Income Inequality Database* (`wiidglobal.csv`) del Instituto Mundial de Investigación sobre Economía del Desarrollo de la Universidad de las Naciones Unidas @wiid_cite.
+
+```{r, warning = FALSE, message = FALSE, fig.align = "center", results = FALSE, out.width = "9cm"}
+# Cargar librerías
+
+library(ggplot2)
+library(dplyr)
+library(sf)
+library(rnaturalearth)
+library(patchwork)
+library(stargazer)
+library(tidyr)
+library(RColorBrewer)
+library(forcats)
+library(ggcorrplot)
+
+dir("dataset")
+
+# Cargar bases de datos
+
+grd <- read.csv("dataset/grd.csv")
+colnames(grd)
+
+hdi <-  read.csv("dataset/hdi.csv")
+colnames(hdi)
+
+wiidglobal <- read.csv("dataset/wiidglobal.csv")
+colnames(wiidglobal)
+
+new_Data <- left_join(wiidglobal, grd, by = c("identifier", "iso3", 
+                                              "country", "year"))
+
+new_Data <- left_join(new_Data, hdi, by = c("identifier", "iso3", 
+                                            "country", "year"))
+
+new_Data <- new_Data  %>% 
+  filter(year >= 1950) %>% 
+  filter(identifier != "Area")
+
+# colnames(new_Data)
+
+new_Data <- new_Data %>%
+  relocate(year, .before = iso3) %>% 
+  relocate(region, .after = iso3) %>% 
+  relocate(subarea, .after = region) %>% 
+  relocate(region_wb, .after = subarea) %>% 
+  relocate(incomegroup, .after = region_wb) %>% 
+  relocate(population, .after = incomegroup) %>% 
+  relocate(gdp, .after = population) %>%
+  relocate(identifier, .before = country)
+```
+
+```{r, warning = FALSE, message = FALSE, fig.align = "center", results = FALSE, out.width = "9cm"}
+# Estadísticas descriptivas y matriz de correlación
+
+# summary(new_Data)
+
+# colnames(new_Data)
+
+# Estadísticas descriptivas y matriz de correlación
+
+stargazer(new_Data[c("population","gdp","gini", "bottom5", "bottom20", "bottom40", "top5", "top10", "top20", "middle50",
+                 "abr", "gdi", "gii", "hdi", "le", "mmr","pr_f", "pr_m")],
+          title="Estadísticas Descriptivas (Serie 1950 - 2022)",
+          digits = 1,
+          flip = F,
+          omit.summary.stat = c("p25", "p75"))
+          # covariate.labels = c("Población",
+                               # "Ingreso medio per cápita (Producto Interno Bruto)",
+                               # "Coeficiente Gini",
+                               # "% de Porcentaje del ingreso nacional del 5% peor remunerado",
+                               # "% de Porcentaje del ingreso nacional del 20% peor remunerado",
+                               # "% de Porcentaje del ingreso nacional del 40% peor remunerado",
+                               # "% de Porcentaje del ingreso nacional del 5% mejor remunerado",
+                               # "% de Porcentaje del ingreso nacional del 10% mejor remunerado",
+                               # "% de Porcentaje del ingreso nacional del 20% mejor remunerado",
+                               # "% de Porcentaje del ingreso nacional del 50% de la población",
+                               # "Tasa de Nacimientos Adolescentes (nacimientos por 1,000 mujeres de 15 a 19 años)",
+                               # "Índice de Desarrollo de Género",
+                               # "Índice de Desigualdad de Género",
+                               # "Índice de Desarrollo Humano",
+                               # "Desigualdad en educación",
+                               # "Desigualdad en ingresos",
+                               # "Esperanza de vida al nacer",
+                               # "Tasa de Mortalidad Materna (muertes por 100,000 nacidos vivos)",
+                               # "Años promedio de escolarización",
+                               # "Porcentaje de asientos en el Parlamento ocupados por mujeres",
+                               # "Porcentaje de asientos en el Parlamento ocupados por hombres"
+                               # )
+          # )
+```
+
+## Estadísticas descriptivas
+
+Los dataset utilizados contienen información sobre desarrollo humano, pobreza y desigualdad para más de 190 países y territorios. A continuación se presentan algunas estadísticas descriptivas de las variables de interés.^[Población (`population`); ingreso per cápita (`gdp`); Coeficiente Gini (`gini`); % del ingreso nacional del 5% peor remunerado (`bottom5`), del 20% peor remunerado (`bottom20`), del 40% peor remunerado (`bottom40`), del 5% mejor remunerado (`top5`), del 10% mejor remunerado (`top10`), del 20% mejor remunerado (`top20`) y del 50% de la población (`middle50`); tasa de nacimientos adolescentes (`abr`); Índice de Desarrollo de Género (`gdi`); Índice de Desigualdad de Género (`gii`); Índice de Desarrollo Humano (`hdi`); esperanza de vida (`le`); tasa de mortalidad materna (`mmr`); años promedio de escolarización (`mys`); % de asientos en el Parlamento ocupados por mujeres (`pr_f`) y % ocupados por hombres (`pr_f`).]
+
+\begin{table}[!htbp] \centering 
+  \caption{Estadísticas Descriptivas (Serie 1950 - 2022)} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}lccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+Statistic & \multicolumn{1}{c}{N} & \multicolumn{1}{c}{Mean} & \multicolumn{1}{c}{St. Dev.} & \multicolumn{1}{c}{Min} & \multicolumn{1}{c}{Max} \\ 
+\hline \\[-1.8ex] 
+population & 15,257 & 24,140,983.0 & 100,784,269.0 & 1,458 & 1,425,893,504 \\ 
+gdp & 15,257 & 14,200.6 & 19,829.4 & 292.9 & 215,779.5 \\ 
+gini & 15,257 & 43.8 & 11.6 & 0.0 & 74.2 \\ 
+bottom5 & 15,257 & 0.8 & 0.5 & 0.05 & 3.1 \\ 
+bottom20 & 15,257 & 5.3 & 2.4 & 0.2 & 14.0 \\ 
+bottom40 & 15,257 & 14.9 & 5.2 & 0.4 & 30.6 \\ 
+top5 & 15,257 & 23.3 & 8.1 & 0.1 & 51.8 \\ 
+top10 & 15,257 & 34.5 & 9.6 & 0.1 & 65.4 \\ 
+top20 & 15,257 & 39.4 & 5.1 & 0.2 & 52.3 \\ 
+middle50 & 15,257 & 50.6 & 5.9 & 29.2 & 99.5 \\ 
+abr & 5,568 & 59.1 & 47.3 & 1.5 & 214.5 \\ 
+gdi & 4,360 & 0.9 & 0.1 & 0.5 & 1.1 \\ 
+gii & 4,389 & 0.4 & 0.2 & 0.01 & 0.8 \\ 
+hdi & 4,970 & 0.7 & 0.2 & 0.2 & 1.0 \\ 
+le & 5,568 & 68.5 & 9.9 & 14.1 & 86.5 \\ 
+mmr & 5,216 & 239.0 & 357.7 & 2.0 & 2,990.0 \\ 
+pr\_f & 5,160 & 16.4 & 11.1 & 0.0 & 57.5 \\ 
+pr\_m & 5,160 & 83.6 & 11.1 & 42.5 & 100.0 \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table} 
+
+# Visualizaciones
+
+## Desigualdad por ingreso
+
+Se observa la distribución del porcentaje de participación del ingreso nacional entre diferentes grupos de la población. o anterior permite analizar la desigualdad en la distribución del ingreso entre diferentes percentiles. Del gráfico podemos observar que, a nivel global, el *Top 5* de las personas mejor remuneradas concentra el 23.3% del ingreso (promedio entre países).
+
+\vspace{15pt}
+
+```{r, warning = FALSE, message = FALSE, fig.align = "center", results = FALSE, out.width = "9cm"}
+# Gráficas de sumarización
+
+new_Data <- new_Data %>% 
+  select(c(identifier, country, year,
+           population, gdp, gini, bottom5, bottom20, bottom40, top5, top10, top20, middle50,
+           abr, gdi, gii, hdi, le, mmr, pr_f, pr_m))
+  
+new_Data <- pivot_longer(data = new_Data,
+               cols = population:pr_m,
+               names_to = "variable",
+               values_to = "data")
+
+# Distribución del ingreso
+
+new_Data %>%
+  filter(variable %in% c("bottom5", "bottom20", "bottom40", "top5",
+                         "top10", "top20", "middle50")) %>%
+  mutate(variable = factor(variable, levels = c("bottom5", "bottom20", "bottom40", "middle50",
+                                                "top20", "top10", "top5")) %>% 
+           fct_recode("Bottom 5" = "bottom5", "Bottom 20" = "bottom20", "Bottom 40" = "bottom40",
+                      "Middle 50" = "middle50", "Top 20" = "top20", "Top 10" = "top10",
+                      "Top 5" = "top5")) %>% 
+  ggplot(aes(variable, data)) + 
+  geom_jitter(fill = "lightgrey", color = "lightgrey", alpha = 0.025) +
+  geom_boxplot(fill = "royalblue", color = "royalblue4", alpha = 0.5) + 
+  theme_minimal() +
+  labs(y = "Porcentaje del ingreso nacional",
+       x = "")
+```
+
+## Coeficiente de Gini a nivel global, regional y nacional (Serie 1950 - 2020)
+
+A continuación se presentan la evolución del Coeficiente de Gini a nivel regional. El Coeficiente es una medida para estimar la desigualdad en los ingresos dentro de un país y se computa como una variable entre 0 y 1, donde 0 se corresponde con la perfecta igualdad y 1 se corresponde con la perfecta desigualdad. ^[Para el entregable final el usuario podrá seleccionar el país, hacer comparaciones entre países, regiones y los datos a nivel global. Además podrá desplegar la visualización para algunos grupos de países, como el G7, G20, la Organización para la Cooperación y el Desarrollo Económicos y los BRICS.  Además, el entregable final permitirá realizar las mismas visualizaciones para indicadores como el Índice de Desarrollo Humano, la esperanza de vida al nacer, la tasa de mortalidad materna, y los años promedio de escolarización.]
+
+\vspace{15pt}
+
+```{r, warning = FALSE, message = FALSE, fig.align = "center", results = FALSE, out.width = "10cm"}
+wiidglobal %>%
+  filter(subarea %in% c("South Asia",
+                        "East Asia and the Pacific",
+                        "Latin America and the Caribbean",
+                        "Middle East and North Africa",
+                        "Sub-Saharan Africa",
+                        "Europe and Central Asia",
+                        "North America")) %>% 
+  ggplot(aes(year, gini,
+             group = subarea, colour = subarea)) + 
+  geom_line(size = .8) +
+  theme_minimal() +
+  labs(# title = "Coeficiente de Gini por región",
+       # subtitle = "Serie 1950 - 2022",
+       y = "Coeficiente de Gini",
+       x = "") +
+  scale_color_brewer(palette = "Set2", name = "") +
+  theme(legend.position = "top") +
+  scale_x_continuous(breaks = seq(min(wiidglobal$year), max(wiidglobal$year), by = 5))
+```
+
+## Desigualdad por género
+
+Se presenta la distribución de algunos indicadores de interés, como el Índice de Desarrollo de Género (`gdi`) y el Índice de Desigualdad de Género (`gii`). Los datos nos muestran cómo se distribuye la evaluación de más de 190 países en estos indicadores.
+
+\vspace{15pt}
+
+```{r, warning = FALSE, message = FALSE, fig.align = "center", results = FALSE, out.width = "11cm"}
+new_Data %>%
+  filter(variable %in% c("gdi", "gii", "hdi")) %>% 
+  ggplot(aes(data, color = variable)) + 
+  geom_density(size = .8) + 
+  theme_minimal() +
+  labs(title = "Distribución de Índices de desarrollo",
+       y = "Densidad",
+       x = "") +
+  theme(legend.position = "top") +
+  scale_x_continuous(breaks = seq(0, 1, by = .1)) +
+  scale_color_manual(values = c("gdi" = "#FC8D62", "gii" = "#66C2A5", "hdi" = "#8DA0CB"), 
+                     name = "", labels = c("Índice de Desarrollo de Género",
+                                           "Índice de Desigualdad de Género",
+                                           "Índice de Desarrollo Humano"
+                      )
+            )
+```
+
+## Desigualdad: participación política 
+
+Se presenta la serie histórica sobre el porcentaje de asientos ocupados en el Parlamento por hombres y mujeres. La línea muestra la tendencia a nivel global (promedio de países), mientras que el marcador de los puntos las observaciones a nivel país. Con los datos se puede apreciar una ligera disminución del porcentaje de asientos ocupados por hombres, así como un aumento en los ocupados por mujeres desde 1990 hasta 2020.^[Para el entregable final, el usuario podrá interactuar con las obs. a nivel país y hacer comparaciones entre países y regiones.]
+
+\vspace{15pt}
+
+```{r, warning = FALSE, message = FALSE, fig.align = "center", results = FALSE, out.width = "12cm"}
+new_Data %>%
+  filter(year >= 1990) %>% 
+  filter(variable %in% c("pr_f", "pr_m")) %>%
+  group_by(variable, year) %>%
+  summarise(data = mean(data, na.rm = T)) %>%
+  ggplot(aes(x = year, y = data, group = variable, color = variable)) + 
+  geom_line(size = 1, size = 2) +
+  geom_jitter(data = new_Data %>% 
+               filter(variable %in% c("pr_f", "pr_m")) %>% 
+               filter(year >= 1990),
+             aes(x = year, y = data), alpha = 0.05) +
+  theme_minimal() +
+  labs(title = "Porcentaje de asientos ocupados en el parlamento por hombres y mujeres",
+       subtitle = "Serie 1990 - 2022 | Promedio a nivel global",
+       y = "Porcentaje de asientos ocupados",
+       x = "") +
+  # scale_color_brewer(palette = "Set2", name = "") +
+  scale_x_continuous(breaks = seq(1990, 2022, by = 2)) +
+  theme(legend.position = "top") +
+  scale_color_manual(values = c("pr_f" = "#FC8D62", "pr_m" = "#66C2A5"), 
+                     name = "", labels = c("Porcentaje de Mujeres", "Porcentaje de Hombres"))
+```
+
+## Matriz de Correlación
+
+Se presenta una matriz de correlación entre las variables de interés para el proyecto final.
+
+\vspace{15pt}
+
+```{r, warning = FALSE, message = FALSE, fig.align = "center", results = FALSE, out.width = "17cm"}
+# Matriz de correlación
+
+new_Data <- left_join(wiidglobal, grd, by = c("identifier", "iso3", 
+                                              "country", "year"))
+
+new_Data <- left_join(new_Data, hdi, by = c("identifier", "iso3", 
+                                            "country", "year"))
+
+new_Data <- new_Data  %>% 
+  filter(year >= 1950) %>% 
+  filter(identifier != "Area")
+
+new_Data <- new_Data %>% 
+  select(c(population, gdp, gini, bottom5, bottom20, bottom40, top5, top10, top20, middle50,
+           abr, gdi, gii, hdi, le, mmr, pr_f, pr_m))
+
+corr <- cor(new_Data, method = "pearson", use = "pairwise.complete.obs") # Run a correlation
+
+my_palette <- brewer.pal(n = 3, name = "PRGn")
+
+ggcorrplot(corr,
+           type = "lower",
+           outline.col = "white",
+           colors = my_palette,
+           lab = TRUE,
+           lab_col = "black",
+           lab_size = 1.5,
+           digits = 2) +
+  theme_minimal() +
+  labs(title = "",
+       y = "",
+       x = "") +
+  theme(axis.text.y = element_text(size = 4),
+        axis.text.x = element_text(size = 4, angle = 90, hjust = 0.5),
+        legend.title = element_blank(),
+        legend.key.width = unit(0.2, "cm"),
+        legend.text = element_text(size = 5))
+```

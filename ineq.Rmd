@@ -1,0 +1,170 @@
+---
+output: 
+  stevetemplates::article2:
+    citation_package: natbib
+    # dev: cairo_pdf
+    keep_tex: FALSE
+# biblio-style: chicago
+csl: chicago-author-date-16th-edition.csl
+title: "Datos sobre desarrollo humano, desigualdad y pobreza"
+thanks: "Los archivos del dataset se encuentran disponibles en (https://github.com/pptrrns/infoViz/tree/main/dataset)."
+author:
+- name: José Ángel Torrens Hernández
+  affiliation: 175021 | \emph{Ciencia Política}
+# abstract: "Indicar el dataset seleccionado. Por qué eligió ese dataset y qué espera obtener de él. Se entrega la descripción del dataset (atributos, longitud, etcétera)."
+keywords: "desigualdad, desarrollo humano, pobreza"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+geometry: margin=1in
+mainfont: cochineal
+#sansfont: Linux Biolinum O
+fontsize: 11pt
+# doublespacing: TRUE
+endnote: no
+# pandocparas: TRUE
+sansitup: FALSE
+bibliography: master.bib
+header-includes:
+  - \usepackage{longtable}
+  - \LTcapwidth=.95\textwidth
+  - \linespread{1}
+  - \usepackage{hyperref}
+  - \usepackage{setspace}  # Se agrega el paquete setspace
+  - \setstretch{1.1}  # Cambiar el interlineado a 1.25
+  - \usepackage{tabularx}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introducción
+
+## Objetivos de Desarrollo Sostenible: (1) fin de la pobreza y (10) reducción de las desigualdades
+
+El 25 de septiembre de 2015, los Estados Miembros de las Naciones Unidas (NN.UU.) adoptaron 17 Objetivos de Desarrollo Sostenible (ODS) para poner fin a la pobreza, proteger el planeta, el medio ambiente y asegurar la prosperidad para todos. Lo resultados de dichos Objetivos deberían alcanzare en 15 años, es decir, para 2030 deberían materializarse y concretarse como una realidad para todas las personas. @un1
+
+En este sentido, a medida que nos acercamos al plazo definido por las NN.UU., es crucial analizar el progreso realizado y tomar acciones encaminadas al cumplimiento de los 17 ODS. De tal forma, propongo analizar el comportamiento de indicadores relacionados con dos Objetivos: (1 ODS) erradicar la pobreza @un2 y (10 ODS) reducir las desigualdades @un3. Estos objetivos se consideran fundamentales para el desarrollo sostenible y el bienestar de las personas, ya que facilitan el acceso a determinantes de desarrollo como alimentos, vivienda digna y de calidad, educación y atención médica. Sin embargo, a pesar de los esfuerzos por erradicar la pobreza y reducir la desigualdad, millones de personas aún viven en condiciones precarias, enfrentando dificultades para asegurar su subsistencia.
+
+Analizar la información disponible, con base en las mejores prácticas de visualización de datos, nos ayudaría a entender la situación actual de ambos ODS. Asimismo, podría contribuir a adoptar enfoques basados en evidencia para impulsar acciones hacia el cumplimiento de ambos Objetivos. 
+
+# Conjunto de datos
+
+Para el Proyecto se utilziará el dataset *Human Development Index* (`hdi.csv`) del Programa de las Naciones Unidas para el Desarrollo @hri_cite, y los conjuntos de datos *World Income Inequality Database* (`wiidcountry.csv`) y *Government Revenue Dataset*  (`grd.csv`), ambos del Instituto Mundial de Investigación sobre Economía del Desarrollo de la Universidad de las Naciones Unidas @wiid_cite y @grd_cite. Estos tres dataset contienen información relevante sobre desarrollo humano, pobreza y desigualdad a lo largo del tiempo para más de 190 países y territorios.
+
+Los conjuntos de datos se utilizarán para analizar tendencias, patrones y comportamiento de indicadores sobre desigualdad y pobreza a nivel regional y nacional. En concreto, se buscarán extraer algunas visualizaciones como la tendencia del Coeficiente de Gini a nivel regional, la tendencia del Índice de Desigualdad de Género (GII) a nivel global, la distribución de ingreso a nivel global, la relación entre los Impuestos sobre la renta, los beneficios y las plusvalía como porcentaje del porcentaje del Producto Interno Bruto (PIB) con el Coeficiente de Gini y otros indicadores de desigualdad, así como las tendencias y comportamientos de indicadores clave de desarrollo humano, como la tasa de mortalidad infantil y materna y los años promedio de educación.
+
+En concreto, con el proyecto se buscará extraer conclusiones sobre el panorama actual en el combate a la pobreza y la reducción de la desigualdad, así como identificar los avances significativos en estas dos áreas.
+
+## Conjunto de datos: Human Development Index
+
+El conjunto de datos `hdi.csv` contiene 6,240 observaciones sobre el Índice de Desarrollo Humano (IDH) y sus componentes para un total de 195 países durante el periodo 1990 - 2021. Las variables del dataset son:
+
+\begin{table}[!htbp] \centering 
+  \caption{Variables cdel conjunto de datos \emph{Human Development Index}}
+  \label{Variables cdel conjunto de datos Human Development Index}
+\begin{tabular}{@{\extracolsep{5pt}}lc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+\emph{Variable} & \emph{Descripción} \\ 
+\hline \\[-1.8ex] 
+abr & Tasa de Nacimientos Adolescentes (nacimientos por 1,000 mujeres de 15 a 19 años) \\ 
+coef\_ineq & Coeficiente de Desigualdad Humana \\ 
+gdi & Índice de Desarrollo de Género \\ 
+gii & Índice de Desigualdad de Género \\ 
+hdi & Índice de Desarrollo Humano \\ 
+hdi\_f & Índice de Desarrollo Humano en mujeres \\ 
+hdi\_m & Índice de Desarrollo Humano en hombres \\ 
+hdicode & Grupos de países de acuerdo al índice de Desarrollo Humano \\ 
+ihdi & Índice de Desarrollo Humano Ajustado por Desigualdad \\ 
+ineq\_edu & Desigualdad en educación \\ 
+ineq\_inc & Desigualdad en ingresos \\ 
+le & Esperanza de vida al nacer \\ 
+le\_f & Esperanza de vida al nacer en mujeres \\ 
+le\_m & Esperanza de vida al nacer en hombres \\ 
+mmr & Tasa de Mortalidad Materna (muertes por 100,000 nacidos vivos) \\ 
+mys & Años promedio de escolarización \\ 
+mys\_f & Años promedio de escolarización en mujeres \\ 
+mys\_m & Años promedio de escolarización en hombres \\ 
+pr\_f & Porcentaje de asientos en el Parlamento ocupados por mujeres \\ 
+pr\_m & Porcentaje de asientos en el Parlamento ocupados por hombres \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
+
+## Conjunto de datos: Government Revenue Dataset
+
+El conjunto de datos `grd.csv` contiene 8,322 observaciones sobre ingresos fiscales y no fiscales a nivel país para un total de 194 países durante el periodo 1980 - 2022. Las variables que componen el dataset son:
+
+\begin{table}[!htbp] \centering 
+  \caption{Variables del conjunto de datos \emph{Government Revenue Dataset}}
+  \label{Variables cdel conjunto de datos Government Revenue Dataset}
+\begin{tabular}{@{\extracolsep{5pt}}lc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+\emph{Variable} & \emph{Descripción} \\ 
+\hline \\[-1.8ex] 
+tax\_income & Impuestos sobre ingresos, beneficios y ganancias de capital (TIPCG) \\ 
+tax\_indiv & TIPCG para individuos (PIT) \\ 
+tax\_corp & TIPCG para corporativos (CIT) \\ 
+tax\_payr\_workf & Impuestos totales sobre nóminas \\ 
+tax\_property & Impuestos totales sobre propiedad \\ 
+tax\_g\_s & Impuestos totales sobre bienes y servicios \\ 
+vat & Impuestos al Valor Agregado Total \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
+
+## Conjunto de datos: World Income Inequality Database
+
+El conjunto de datos ` wiidcountry.csv` contiene 2,674 observaciones sobre desigualdad de ingresos a nivel país para un total de 197 países durante el periodo 1890 - 2022. Las variables que componen el dataset son:
+
+\begin{table}[!htbp] \centering 
+  \caption{Variables del conjunto de datos \emph{World Income Inequality Database}} 
+  \label{Variables del conjunto de datos World Income Inequality Database}
+\begin{tabular}{@{\extracolsep{5pt}}lc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+\emph{Variable} & \emph{Descripción} \\ 
+\hline \\[-1.8ex] 
+region\_wb & Región Geográfica (Banco Mundial) \\ 
+region\_un & Región Geográfica (Naciones Unidas) \\ 
+region\_un\_sub & Subregión Geográfica (Naciones Unidas) \\ 
+eu & Pertenencia a la Unión Europea \\ 
+g7 & Pertenencia al G7 \\ 
+g20 & Pertenencia al G20 \\ 
+oecd & Pertenencia a la OCDE \\ 
+brics & Pertenencia a los BRICS \\ 
+incomegroup & Países por grupo de Ingresos \\ 
+population & Población \\ 
+shareseries & Serie del Gini B \\ 
+giniseries & Serie del Gini A \\ 
+gdp & Ingreso medio per cápita (Producto Interno Bruto) \\ 
+gini\_std & Coeficiente Gini estandarizado \\ 
+gini & Coeficiente Gini \\ 
+bottom5 & \% de participación en el ingreso total del país del 5\% peor remunerado \\ 
+bottom20 & \% de participación en el ingreso total del país del 20\% peor remunerado \\ 
+bottom40 & \% de participación en el ingreso total del país del 40\% peor remunerado \\ 
+top5 & \% de participación en el ingreso total del país del 5\% mejor remunerado \\ 
+top20 & \% de participación en el ingreso total del país del 20\% mejor remunerado \\ 
+middle50 & \% de participación en el ingreso total del país del 50\% de la población \\ 
+ginia & Gini Absoluto \\ 
+dp1-dp10 & \% de participación en el ingreso total del país por decil \\ 
+p1-p100 & \% de participación en el ingreso total del país por percentil \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table} 
+
+Cada una de estos conjuntos de datos incluye las siguientes variables para identificar las observaciones:
+
+\begin{table}[!htbp] \centering 
+  \caption{Variables generales de cada conjunto de datos} 
+  \label{Variables generales de cada conjunto de datos} 
+\begin{tabular}{@{\extracolsep{5pt}}lccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+\textbf{identifier} & \textbf{iso3} & \textbf{country} & \textbf{year} \\ 
+\hline \\[-1.8ex] 
+Identificador de país y año & Código ISO (3 letras) & Nombre del país o territorio & Año \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
